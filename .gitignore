@@ -162,3 +162,6 @@ cython_debug/
 # Some folders
 logs/
 docker_compose.txt
+data/service_account/
+*.ipynb
+config/
