@@ -29,6 +29,7 @@ LOCATION = Variable.get("LOCATION")
 
 CREDENTIALS = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT)
 
+
 def extract_the_data() -> None:
     global CREDENTIALS
     df = pd.read_csv("data/src/animes.csv")
@@ -36,7 +37,10 @@ def extract_the_data() -> None:
 
     client = storage.Client(credentials=CREDENTIALS)
     bucket = client.get_bucket(BUCKET_NAME)
-    bucket.blob('resource/animes.csv').upload_from_string(df_score.to_csv(index=False), 'text/csv')
+    bucket.blob("resource/animes.csv").upload_from_string(
+        df_score.to_csv(index=False), "text/csv"
+    )
+
 
 def load_data_to_bigquery() -> None:
     # Construct a BigQuery client object.
@@ -64,33 +68,26 @@ def load_data_to_bigquery() -> None:
         table = bigquery.Table(table_id, schema=schema)
         job = client.create_table(table)
     finally:
-        storage_client = storage.Client(credentials=CREDENTIALS)  
+        storage_client = storage.Client(credentials=CREDENTIALS)
         bucket = storage_client.get_bucket(BUCKET_NAME)
-        blob = bucket.get_blob('resource/animes.csv')
+        blob = bucket.get_blob("resource/animes.csv")
         data = blob.download_as_bytes()
         df = pd.read_csv(BytesIO(data))
         df.to_gbq(
-            destination_table=f"{PROJECT_ID}.{DATASET_ID}.{TABLE_ID}", 
+            destination_table=f"{PROJECT_ID}.{DATASET_ID}.{TABLE_ID}",
             if_exists="replace",
-            credentials=CREDENTIALS
+            credentials=CREDENTIALS,
         )
+
 
 dag = DAG(
     dag_id="LOCAL_TO_BIGQUERY",
     start_date=(datetime.now() - timedelta(days=1)),
-    catchup=False
+    catchup=False,
 )
 
-t1 = PythonOperator(
-    task_id="transform_data",
-    python_callable=extract_the_data,
-    dag=dag
-)
+t1 = PythonOperator(task_id="transform_data", python_callable=extract_the_data, dag=dag)
 
-t2 = PythonOperator(
-    task_id="load_data",
-    python_callable=load_data_to_bigquery,
-    dag=dag
-)
+t2 = PythonOperator(task_id="load_data", python_callable=load_data_to_bigquery, dag=dag)
 
 t1 >> t2
