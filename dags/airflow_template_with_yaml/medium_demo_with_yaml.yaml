@@ -1,0 +1,54 @@
+######################## Default DAG Config #############################
+
+default:
+  default_args:
+    owner: "airflow"
+    start_date: 2024-09-01
+    retries: 1
+    retry_delay_sec: 30
+  catchup: False
+  dagrun_timeout_sec: 300
+  tags: ["airflow_template", "demo"]
+
+#########################################################################
+##############################Task Config ###############################
+
+# Dag ID - transform_csv_yaml
+transform_csv_with_yaml:
+  description: "this is an example dag"
+  # Determine Task
+  tasks:
+    start:
+      operator: airflow.operators.empty.EmptyOperator
+
+    transform:
+      operator: airflow.operators.python.PythonOperator
+      python_callable_name: transform_csv
+      python_callable_file: /opt/airflow/dags/airflow_template_with_yaml/utils/transform.py
+      op_kwargs: {
+        "source": "data/src/animes.csv",
+        "output": "data/out/transform_animes.csv",
+      }
+      dependencies: [start]
+
+    end:
+      operator: airflow.operators.empty.EmptyOperator
+      dependencies: [transform, transform_a, transform_b, transform_c, transform_d]
+    
+    transform_a:
+      operator: airflow.operators.empty.EmptyOperator
+      dependencies: [start]
+    
+    transform_b:
+      operator: airflow.operators.empty.EmptyOperator
+      dependencies: [start]
+    
+    transform_c:
+      operator: airflow.operators.empty.EmptyOperator
+      dependencies: [start]
+    
+    transform_d:
+      operator: airflow.operators.empty.EmptyOperator
+      dependencies: [start]
+
+#########################################################################

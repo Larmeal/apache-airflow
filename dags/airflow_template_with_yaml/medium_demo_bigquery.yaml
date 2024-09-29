@@ -1,0 +1,47 @@
+######################## Default DAG Config #############################
+
+default:
+  default_args:
+    owner: "airflow"
+    start_date: 2024-09-01
+    retries: 1
+    retry_delay_sec: 30
+  catchup: False
+  dagrun_timeout_sec: 300
+  tags: ["airflow_template", "demo"]
+  template_seachpath: /opt/airflow/dags/airflow_template_with_yaml
+
+#########################################################################
+##############################Task Config ###############################
+
+# Dag ID - transform_csv_yaml
+transform_csv_yaml:
+  description: "Execute the SQL on BigQuery"
+  # Determine Task
+  tasks:
+    start:
+      operator: airflow.operators.empty.EmptyOperator
+
+    bigquery_job:
+      operator: airflow.providers.google.cloud.operators.bigquery.BigQueryInsertJobOperator
+      configuration: {
+        "query": "sql/daily_job.sql",
+        "useLegacySQL": False,
+        "queryParameters": [
+          {
+            "name": "start_date",
+            "parameterType": {"type": "STRING"},
+            "parameterValue": {"value": "{{ data_interval_start.strftime('%y-%m-%d') }}"}
+          }
+        ]
+      }
+      location: "asia-southeast1"
+      gcp_conn_id: "google_cloud_default"
+      dependencies: [start]
+      params: {"project_id": "project_test"}
+
+    end:
+      operator: airflow.operators.empty.EmptyOperator
+      dependencies: [bigquery_job]
+
+#########################################################################

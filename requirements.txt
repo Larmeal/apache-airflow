@@ -8,3 +8,4 @@ fsspec==2024.3.1
 pyarrow==16.0.0
 gcsfs==2024.3.1
 pandas==2.2.2
+dag-factory
